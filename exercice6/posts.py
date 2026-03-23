@@ -15,6 +15,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    author = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
     
@@ -81,24 +82,25 @@ def create_post():
     logger.info("create post request")
     data = request.get_json()
 
-    if not data or not all(k in data for k in ("title", "content")):
+    if not data or not all(k in data for k in ("title", "content", "author")):
         logger.error("missing json data")
         return jsonify({"error": "Données invalides"}), 400
 
     new_post = Post(
         title=data["title"],
         content=data["content"],
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        author=data["author"],
+        created_at=datetime.datetime.utcnow(),
+        updated_at=datetime.datetime.utcnow()
     )
 
     db.session.add(new_post)
     db.session.commit()
 
     return jsonify({
-        "id": new_post.id,
         "title": new_post.title,
         "content": new_post.content,
+        "author": new_post.author,
         "created_at": new_post.created_at.isoformat(),
         "updated_at": new_post.updated_at.isoformat()
     }), 201
