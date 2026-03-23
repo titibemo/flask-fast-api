@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
-import time
+from services.posts import get_current_time
+import structlog
+logger = structlog.get_logger()
+
 exercice6_bp = Blueprint('exercice6', __name__, url_prefix='/api/exercice6')
 
 # Créez une API blog complète avec:
@@ -22,10 +25,12 @@ posts = [
 
 @exercice6_bp.route('/posts', methods=['GET'])
 def get_posts():
+    logger.info('get posts request')
     return jsonify(posts)
 
 @exercice6_bp.route('/posts/<int:id>', methods=['GET'])
 def get_post(id):
+    logger.info('get post request with id', id=id)
     for post in posts:
         if post["id"] == id:
             return jsonify(post)
@@ -33,9 +38,11 @@ def get_post(id):
 
 @exercice6_bp.route('/posts', methods=['POST'])
 def create_post():    
+    logger.info('create post request')
     data = request.get_json()
 
     if not data or not all(k in data for k in ("title", "content", "author")):
+        logger.error('missing json data')
         return jsonify({"error": "Données invalides"}), 400
 
     new_id = max(post["id"] for post in posts) + 1 if posts else 1
@@ -55,6 +62,7 @@ def create_post():
 
 @exercice6_bp.route('/posts/<int:id>', methods=['PUT'])
 def update_post(id):    
+    logger.info('update post request with id', id=id)
     data = request.get_json()
 
     if not data or not all(k in data for k in ("title", "content", "author")):
@@ -72,14 +80,11 @@ def update_post(id):
 
 @exercice6_bp.route('/posts/<int:id>', methods=['DELETE'])
 def delete_post(id):
+    logger.info('delete post request with id', id=id)
     for post in posts:
         if post["id"] == id:
             posts.remove(post)
             return jsonify({"message": "Article supprimé"}), 200
 
     return jsonify({"error": "Article non rencontré"}), 404
-
-# Fonction temps
-def get_current_time():
-    return time.strftime("%Y-%m-%d")
 

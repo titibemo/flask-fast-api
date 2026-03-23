@@ -1,46 +1,21 @@
 from flask import Blueprint, request, jsonify
-exercice4_bp = Blueprint('exercice4', __name__, url_prefix='/api/exercice4')
+from services.users import validate_username, validate_email, validate_password, validate_age
+import structlog
 
-from flask import Blueprint, request, jsonify
-import re
+logger = structlog.get_logger()
 
 exercice4_bp = Blueprint('exercice4', __name__, url_prefix='/api/exercice4')
 
 users = []
 
-def validate_username(username):
-    if not username:
-        return "Username requis"
-    if not (2 <= len(username) <= 20):
-        return "Username doit contenir entre 2 et 20 caractères"
-
-def validate_email(email):
-    if not email:
-        return "Email requis"
-    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    if not re.match(pattern, email):
-        return "Email invalide"
-
-def validate_password(password):
-    if not password:
-        return "Password requis"
-    if len(password) < 8:
-        return "Password doit contenir au moins 8 caractères"
-
-def validate_age(age):
-    if age is None:
-        return "Age requis"
-    if not isinstance(age, int):
-        return "Age doit être un entier"
-    if not (18 <= age <= 100):
-        return "Age doit être entre 18 et 100"
-
 @exercice4_bp.route('/register', methods=['POST'])
 def register():
+    logger.info('register request')
     data = request.get_json()
     errors = []
 
     if not data:
+        logger.error('missing json data')
         return jsonify({"errors": ["Données JSON requises"]}), 400
 
     # validations
@@ -51,6 +26,7 @@ def register():
 
     for err in [username_error, email_error, password_error, age_error]:
         if err:
+            logger.error('validation error', err=err)
             errors.append(err)
 
     if errors:

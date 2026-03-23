@@ -1,8 +1,14 @@
 from flask import Blueprint, request
+import structlog
+
 exercice2_bp = Blueprint('exercice2', __name__, url_prefix='/api/exercice2')
+logger = structlog.get_logger()
+
 
 @exercice2_bp.route('/convert/temp', methods=['GET'])
 def temperature():
+    logger.info('temperature conversion', value=request.args.get('value'), unit=request.args.get('unit'))
+    
     value = request.args.get('value', type=float)
     unit = request.args.get('unit', type=str)
     if value is None or unit is None:

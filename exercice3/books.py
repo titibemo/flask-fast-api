@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+import structlog
+logger = structlog.get_logger()
 exercice3_bp = Blueprint('exercice3', __name__, url_prefix='/api/exercice3')
 
 # Créez une API simple pour gérer une liste de livres en mémoire.
@@ -27,10 +29,12 @@ books = [
 
 @exercice3_bp.route('/books', methods=['GET'])
 def get_books():
+    logger.info('get books request')
     return jsonify(books)
 
 @exercice3_bp.route('/books/<int:id>', methods=['GET'])
 def get_book(id):
+    logger.info('get book request', id=id)
     for book in books:
         if book["id"] == id:
             return jsonify(book)
@@ -38,6 +42,7 @@ def get_book(id):
 
 @exercice3_bp.route('/books', methods=['POST'])
 def create_book():
+    logger.info('create book request')
     data = request.get_json()
 
     if not data or not all(k in data for k in ("title", "author", "year")):

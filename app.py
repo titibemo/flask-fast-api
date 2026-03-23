@@ -1,12 +1,14 @@
 # app.py
 from flask import Flask
-from exercice1.routes import exercice1_bp
-from exercice2.routes import exercice2_bp
-from exercice3.routes import exercice3_bp
-from exercice4.routes import exercice4_bp
-from exercice5.routes import exercice5_bp
-from exercice6.routes import exercice6_bp
+from exercice1.exercice1_road import exercice1_bp
+from exercice2.temperature import exercice2_bp
+from exercice3.books import exercice3_bp
+from exercice4.register import exercice4_bp
+from exercice5.calculate import exercice5_bp
+from exercice6.posts import exercice6_bp
+from services.logger import setup_logging
 
+setup_logging()
 
 app = Flask(__name__)
 app.register_blueprint(exercice1_bp) 
