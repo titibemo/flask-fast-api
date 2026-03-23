@@ -1,16 +1,26 @@
 from flask import Blueprint, request, jsonify
 from services.posts import get_current_time
 import structlog
+from flask_sqlalchemy import SQLAlchemy
+import datetime
+from .database import db
 logger = structlog.get_logger()
 
-exercice6_bp = Blueprint('exercice6', __name__, url_prefix='/api/exercice6')
 
-# Créez une API blog complète avec:
-# - `GET /posts` - Lister tous les articles
-# - `GET /posts/<id>` - Détail d'un article
-# - `POST /posts` - Créer un article
-# - `PUT /posts/<id>` - Modifier un article
-# - `DELETE /posts/<id>` - Supprimer un article
+###############  test sqlalchimu
+
+class Post(db.Model):
+    __tablename__ = "posts"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+    
+####################
+
+exercice6_bp = Blueprint('exercice6', __name__, url_prefix='/api/exercice6')
 
 posts = [
     {
@@ -25,8 +35,14 @@ posts = [
 
 @exercice6_bp.route('/posts', methods=['GET'])
 def get_posts():
-    logger.info('get posts request')
-    return jsonify(posts)
+    posts = Post.query.all()
+    return jsonify([{
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "created_at": post.created_at.isoformat(),
+        "updated_at": post.updated_at.isoformat()
+    } for post in posts])
 
 @exercice6_bp.route('/posts/<int:id>', methods=['GET'])
 def get_post(id):
@@ -36,29 +52,58 @@ def get_post(id):
             return jsonify(post)
     return jsonify({"error": "Article non trouvé"}), 404
 
+# @exercice6_bp.route('/posts', methods=['POST'])
+# def create_post():    
+#     logger.info('create post request')
+#     data = request.get_json()
+
+#     if not data or not all(k in data for k in ("title", "content", "author")):
+#         logger.error('missing json data')
+#         return jsonify({"error": "Données invalides"}), 400
+
+#     new_id = max(post["id"] for post in posts) + 1 if posts else 1
+
+#     new_post = {
+#         "id": new_id,
+#         "title": data["title"],
+#         "content": data["content"],
+#         "author": data["author"],
+#         "created_at": get_current_time(),
+#         "updated_at": get_current_time()
+#     }
+
+#     posts.append(new_post)
+
+#     return jsonify(new_post), 201
+
 @exercice6_bp.route('/posts', methods=['POST'])
-def create_post():    
-    logger.info('create post request')
+def create_post():
+    logger.info("create post request")
     data = request.get_json()
 
-    if not data or not all(k in data for k in ("title", "content", "author")):
-        logger.error('missing json data')
+    if not data or not all(k in data for k in ("title", "content")):
+        logger.error("missing json data")
         return jsonify({"error": "Données invalides"}), 400
 
-    new_id = max(post["id"] for post in posts) + 1 if posts else 1
+    new_post = Post(
+        title=data["title"],
+        content=data["content"],
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
 
-    new_post = {
-        "id": new_id,
-        "title": data["title"],
-        "content": data["content"],
-        "author": data["author"],
-        "created_at": get_current_time(),
-        "updated_at": get_current_time()
-    }
+    db.session.add(new_post)
+    db.session.commit()
 
-    posts.append(new_post)
+    return jsonify({
+        "id": new_post.id,
+        "title": new_post.title,
+        "content": new_post.content,
+        "created_at": new_post.created_at.isoformat(),
+        "updated_at": new_post.updated_at.isoformat()
+    }), 201
 
-    return jsonify(new_post), 201
+
 
 @exercice6_bp.route('/posts/<int:id>', methods=['PUT'])
 def update_post(id):    
